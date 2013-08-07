@@ -20,8 +20,20 @@
 
 namespace EightMonkeys.MonkeyEmpire.MonkeyNet
 {
-    public class PeerSocket
-    {
+    using System;
+    using System.Net.Sockets;
 
+    public class PeerSocket: Socket, IDisposable
+    {
+        public PeerSocket()
+            : base(AddressFamily.InterNetworkV6, SocketType.Dgram, ProtocolType.Udp)
+        {
+
+        }
+
+        public new void Dispose()
+        {
+            base.Dispose();
+        }
     }
 }
