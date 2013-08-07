@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="utf-8"?>
+<project name="MonkeyNet" default="build" basedir=".">
+    <description>
+        A CLR library for real-time networking with UDP
+    </description>
+
+    <!-- Build settings -->
+    <property name="build.isDebug"
+              value="true"
+              overwrite="false" />
+    <property name="build.Optimize"
+              value="false"
+              overwrite="false" />
+
+    <!-- Project layout and version -->
+    <property name="project.majorVersion"
+              value="0"
+              overwrite="false" />
+    <property name="project.minorVersion"
+              value="1"
+              overwrite="false" />
+    <property name="project.hotfixVersion"
+              value="0"
+              overwrite="false" />
+    <property name="project.buildNumber"
+              value="0"
+              overwrite="false" />
+
+    <property name="project.bin"
+              value="${directory::get-current-directory()}/bin" />
+    <property name="project.artifacts"
+              value="${directory::get-current-directory()}/artifacts" />
+    <property name="project.sources"
+              value="${directory::get-current-directory()}/src" />
+    <property name="project.tests"
+              value="${directory::get-current-directory()}/tests" />
+
+    <!-- Dependencies included in the build -->
+    <assemblyfileset id="dependencies">
+        <include name="System.dll" />
+        <include name="System.ComponentModel.Composition.dll" />
+        <include name="${nant::get-base-directory()}/lib/common/2.0/nunit.framework.dll"/>
+    </assemblyfileset>
+
+    <target name="build" depends="manifestconstruction" description="builds the assembly">
+        <echo message="Building on ${environment::get-operating-system()} for ${framework::get-description()}" />
+        <echo message="Also available frameworks: ${framework::get-frameworks('installed')}" />
+
+        <call target="manifestconstruction" cascade="false" />
+
+        <csc target="library"
+             output="${project.bin}/${project::get-name()}.dll"
+             debug="${build.isDebug}"
+             optimize="${build.Optimize}">
+            <sources failonempty="true">
+                <include name="${project.sources}**/*.cs" />
+            </sources>
+            <references refid="dependencies" />
+        </csc>
+
+        <!--<call target="document assemblies" cascade="false" />-->
+    </target>
+
+    <target name="test" description="executes defined unittests" >
+        <csc target="library"
+             output="${project.bin}/${project::get-name()}.Tests.dll">
+            <sources>
+                <include name="${project.sources}/**.*cs" />
+                <include name="${project.tests}/**.*cs" />
+            </sources>
+            <references refid="dependencies" />
+        </csc>
+
+        <nunit2>
+            <test assemblyname="${project.bin}/${project::get-name()}.Tests.dll" />
+            <formatter type="Xml" usefile="true" extension=".xml" outputdir="${project.artifacts}/Testresults/NUnit" />
+        </nunit2>
+    </target>
+
+    <target name="clean" description="deletes artifacts folders and files">
+        <delete dir="${project.bin}" />
+        <delete dir="${project.artifacts}" />
+        <delete dir="doc" />
+    </target>
+
+    <target name="manifestconstruction" description="generates a manifest file">
+        <asminfo output="${project.sources}/AssemblyInfo.cs" language="CSharp">
+            <imports>
+                <import namespace="System" />
+                <import namespace="System.Reflection" />
+                <import namespace="System.Runtime.InteropServices" />
+            </imports>
+            <attributes>
+                <attribute type="ComVisibleAttribute" value="false" />
+                <attribute type="CLSCompliantAttribute" value="true" />
+                <attribute type="AssemblyFileVersionAttribute"
+                           value="${project.majorVersion}.${project.minorVersion}.${project.hotfixVersion}.${project.buildNumber}" />
+                <attribute type="AssemblyTitleAttribute"
+                           value="MonkeyNet" />
+                <attribute type="AssemblyDescriptionAttribute"
+                           value="A real-time networking library" />
+                <attribute type="AssemblyProductAttribute"
+                           value="MonkeyEmpire" />
+                <attribute type="AssemblyCopyrightAttribute"
+                           value="Copyright (c) 2013, 8monkeys.de" />
+                <attribute type="AssemblyCultureAttribute" value="" />
+            </attributes>
+        </asminfo>
+    </target>
+
+    <target name="document" depends="build" description="Creates documentation for all build outputs">
+      <ndoc>
+        <assemblies basedir="${project.bin}">
+          <include name="**/*.exe" />
+          <include name="**/*.dll" />
+        </assemblies>
+        <summaries basedir="${project.bin}">
+          <include name="NamespaceSummary.xml" />
+        </summaries>
+        <documenters>
+          <documenter name="MSDN">
+            <property name="OutputDirectory" value="doc\MSDN" />
+            <property name="HtmlHelpName" value="Typewriter" />
+            <property name="IncludeFavorites" value="False" />
+            <property name="Title" value="The Typewriters documentation" />
+            <property name="SplitTOCs" value="False" />
+            <property name="DefaulTOC" value="" />
+            <property name="ShowVisualBasic" value="True" />
+            <property name="ShowMissingSummaries" value="True" />
+            <property name="ShowMissingRemarks" value="True" />
+            <property name="ShowMissingParams" value="True" />
+            <property name="ShowMissingReturns" value="True" />
+            <property name="ShowMissingValues" value="True" />
+            <property name="DocumentInternals" value="False" />
+            <property name="DocumentProtected" value="True" />
+            <property name="DocumentPrivates" value="True" />
+            <property name="DocumentEmptyNamespaces" value="True" />
+            <property name="IncludeAssemblyVersion" value="True" />
+            <property name="CopyrightText" value="" />
+            <property name="CopyrightHref" value="" />
+          </documenter>
+        </documenters>
+      </ndoc>
+    </target>
+</project>
