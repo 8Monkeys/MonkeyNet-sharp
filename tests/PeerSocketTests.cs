@@ -6,6 +6,7 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
 {
     using NUnit.Framework;
     using System.Net;
+    using System.Net.Sockets;
 
     [TestFixture]
     public class PeerSocketTests
