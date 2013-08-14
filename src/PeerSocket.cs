@@ -38,24 +38,45 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
     /// </remarks>
     public sealed class PeerSocket: Socket, IDisposable
     {
+        public bool Bound { get; private set; }
+
         /// <summary>
         /// Initializes a new object of the PeerSocket bound to the specified port.
         /// </summary>
         public PeerSocket( int port )
+            : this( new IPEndPoint( IPAddress.IPv6Any, port ) ) { }
+
+        /// <summary>
+        /// Initializes a new object of the PeerSocket bound to the specified port.
+        /// </summary>
+        /// <remarks>
+        /// A new UDP socket is initialized that is using IPv6 for address lookup. The underlying 
+        /// OS has to support that in order to run with this correctly.
+        /// 
+        /// If the underlying socket is failing to bind to the specified EndPoint an exception is
+        /// caught in this class and the Bound property is set to false.
+        /// </remarks>
+        /// <param name="localEndpoint">Listening address and port to listen to</param>
+        public PeerSocket( EndPoint localEndpoint )
             : base( AddressFamily.InterNetworkV6, SocketType.Dgram, ProtocolType.Udp )
         {
+            Bound = IsBound;
             try
             {
-                IPEndPoint boundEndPoint = new IPEndPoint( IPAddress.IPv6Any, port );
-                base.Bind( boundEndPoint );
-                base.Blocking = false;
+                base.Bind( localEndpoint );
             }
-            catch ( SocketException ESocket )
+            catch ( SocketException s )
             {
-                Console.WriteLine( ESocket.Message );
-                Dispose();
+                Bound = false;
             }
+            Bound = true;
         }
+
+        /// <summary>
+        /// Initializes a new PeerSocket object that binds to port 42337
+        /// </summary>
+        public PeerSocket()
+            : this( 42337 ) { }
 
         public void Open()
         {
@@ -63,7 +84,7 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
         }
 
         /// <summary>
-        /// 
+        /// Disposes the PeerSocket object and releases the underlying socket.
         /// </summary>
         void IDisposable.Dispose()
         {
