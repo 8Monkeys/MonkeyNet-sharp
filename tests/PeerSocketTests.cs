@@ -5,12 +5,13 @@
 namespace EightMonkeys.MonkeyEmpire.MonkeyNet
 {
     using NUnit.Framework;
+    using System.Net;
 
     [TestFixture]
-    public class DummyTester
+    public class PeerSocketTests
     {
         [Test]
-        public void initialTest()
+        public void PeerConstructorTests()
         {
             PeerSocket socket = new PeerSocket();
             Assert.IsNotNull( socket );
