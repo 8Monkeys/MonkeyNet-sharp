@@ -12,7 +12,7 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
         [Test]
         public void initialTest()
         {
-            PeerSocket socket = new PeerSocket();
+            PeerSocket socket = new PeerSocket(1337);
             Assert.IsNotNull(socket);
         }
     }
