@@ -21,17 +21,51 @@
 namespace EightMonkeys.MonkeyEmpire.MonkeyNet
 {
     using System;
+    using System.Net;
     using System.Net.Sockets;
 
-    public class PeerSocket: Socket, IDisposable
+    /// <summary>
+    /// A PeerSocket is a single socket instance that handle all communication with other peers
+    /// through a single port.
+    /// </summary>
+    /// <remarks>
+    /// Create only one PeerSocket per port on a machine. This instance in then used to send and 
+    /// receive messages from other peers. Each incoming message is forwarded to the apllication 
+    /// registry that is routing the message to an application that is able to handle it, or drops
+    /// the packet. 
+    /// 
+    /// Communication is working UDP-based and is completely asynchrnous.
+    /// </remarks>
+    public sealed class PeerSocket: Socket, IDisposable
     {
-        public PeerSocket()
-            : base(AddressFamily.InterNetworkV6, SocketType.Dgram, ProtocolType.Udp)
+        /// <summary>
+        /// Initializes a new object of the PeerSocket bound to the specified port.
+        /// </summary>
+        public PeerSocket( int port )
+            : base( AddressFamily.InterNetworkV6, SocketType.Dgram, ProtocolType.Udp )
         {
-
+            try
+            {
+                IPEndPoint boundEndPoint = new IPEndPoint( IPAddress.IPv6Any, port );
+                base.Bind( boundEndPoint );
+                base.Blocking = false;
+            }
+            catch ( SocketException ESocket )
+            {
+                Console.WriteLine( ESocket.Message );
+                Dispose();
+            }
         }
 
-        public new void Dispose()
+        public void listen()
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// 
+        /// </summary>
+        void IDisposable.Dispose()
         {
             base.Dispose();
         }
