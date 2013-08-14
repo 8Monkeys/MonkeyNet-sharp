@@ -13,7 +13,11 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
         public void initialTest()
         {
             PeerSocket socket = new PeerSocket();
-            Assert.IsNotNull(socket);
+            Assert.IsNotNull( socket );
+            socket = new PeerSocket( 5500 );
+            Assert.IsNotNull( socket );
+            socket = new PeerSocket(new IPEndpoint(IPAddress.IPv6None, 5500));
+            Assert.IsNotNull( socket );
         }
     }
 }

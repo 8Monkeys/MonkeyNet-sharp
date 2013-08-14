@@ -65,7 +65,7 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
             {
                 base.Bind( localEndpoint );
             }
-            catch ( SocketException s )
+            catch ( SocketException )
             {
                 Bound = false;
             }
