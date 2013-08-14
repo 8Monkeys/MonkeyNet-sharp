@@ -57,7 +57,7 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
             }
         }
 
-        public void listen()
+        public void Open()
         {
             throw new NotImplementedException();
         }
