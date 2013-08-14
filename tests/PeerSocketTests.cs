@@ -22,5 +22,12 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
             socket = new PeerSocket(new IPEndPoint( IPAddress.IPv6Any, 5500));
             Assert.IsNotNull( socket );
         }
+
+        [Test]
+        public void ListeningTest()
+        {
+            PeerSocket socket = new PeerSocket();
+            Assert.IsTrue( socket.Open() );
+        }
     }
 }

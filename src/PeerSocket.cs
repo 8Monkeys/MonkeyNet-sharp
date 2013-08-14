@@ -78,9 +78,17 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
         public PeerSocket()
             : this( 42337 ) { }
 
-        public void Open()
+        /// <summary>
+        /// "Opens" the socket and waits for incoming messages
+        /// </summary>
+        /// <returns>true if the server has started listening</returns>
+        public bool Open()
         {
-            throw new NotImplementedException();
+            if ( Bound && base.IsBound )
+            {
+                return true;
+            }
+            else return false;
         }
 
         /// <summary>
