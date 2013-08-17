@@ -23,8 +23,8 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
     using System;
     using System.Collections.Generic;
     using System.Net;
-    using System.Net.Sockets;
     using System.Net.NetworkInformation;
+    using System.Net.Sockets;
     using System.Security;
 
     /// <summary>
@@ -114,12 +114,8 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
         public bool Open() {
             if (Bound && _udpSocket.IsBound) {
                 findMaxMTU();
-                _stateobjects = new Queue<SocketAsyncEventArgs>(10);
-                for (int i=0; i <= 9; i++) {
-                    var aNewStateObject = new SocketAsyncEventArgs();
-                    aNewStateObject.Completed += OnMessageReceived;
-                    _stateobjects.Enqueue(aNewStateObject);
-                }
+                initStateObjects();
+                listen();
                 return true;
             }
             else
@@ -139,8 +135,18 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
         #endregion
 
         #region private Methods
+        private void listen() {
+            var IOObject = _stateobjects.Dequeue();
+            if (!_udpSocket.ReceiveMessageFromAsync(IOObject))
+                OnMessageReceived(_udpSocket, IOObject);
+        }
+
         private void OnMessageReceived(object sender, SocketAsyncEventArgs e) {
-            throw new NotImplementedException();
+            listen();
+            byte[] message = new byte[e.BytesTransferred];
+            Buffer.BlockCopy(e.Buffer, 0, message, 0, e.BytesTransferred);
+            newMessage(this, new PeerMessage(e.RemoteEndPoint, message));
+            _stateobjects.Enqueue(e);
         }
 
         private void findMaxMTU() {
@@ -148,6 +154,17 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
                 int interfaceMTU = Interface.GetIPProperties().GetIPv6Properties().Mtu;
                 if (interfaceMTU > MTU)
                     MTU = interfaceMTU;
+            }
+        }
+
+        private void initStateObjects() {
+            _stateobjects = new Queue<SocketAsyncEventArgs>(10);
+            for (int i=0; i <= 9; i++) {
+                var stateObject = new SocketAsyncEventArgs();
+                stateObject.SetBuffer(new byte[MTU], 0, MTU);
+                stateObject.RemoteEndPoint = LocalEndPoint;
+                stateObject.Completed += OnMessageReceived;
+                _stateobjects.Enqueue(stateObject);
             }
         }
         #endregion

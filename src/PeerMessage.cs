@@ -25,7 +25,12 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
 
     public struct PeerMessage
     {
-        IPEndPoint ConnectionPeer { get; set; }
-        byte[] messageData { get; set; }
+        public PeerMessage(EndPoint peer, byte[] message)
+            : this() {
+            ConnectionPeer = peer;
+            MessageData = message;
+        }
+        public EndPoint ConnectionPeer { get; private set; }
+        public byte[] MessageData { get; private set; }
     }
 }
