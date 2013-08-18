@@ -126,19 +126,28 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
         /// Disposes the PeerSocket object and releases the underlying socket.
         /// </summary>
         public void Dispose() {
-            foreach (var argsObject in _stateobjects) {
-                argsObject.Dispose();
-            }
             _udpSocket.Close();
             _udpSocket.Dispose();
+            clearStateObjects();
         }
         #endregion
 
         #region private Methods
+        private void clearStateObjects() {
+            foreach (var argsObject in _stateobjects) {
+                argsObject.Dispose();
+            }
+            _stateobjects.Clear();
+        }
+
         private void listen() {
-            var IOObject = _stateobjects.Dequeue();
-            if (!_udpSocket.ReceiveMessageFromAsync(IOObject))
-                OnMessageReceived(_udpSocket, IOObject);
+            try {
+                var IOObject = _stateobjects.Dequeue();
+                if (!_udpSocket.ReceiveMessageFromAsync(IOObject))
+                    OnMessageReceived(_udpSocket, IOObject);
+            }
+            catch (ObjectDisposedException) {
+            }
         }
 
         private void OnMessageReceived(object sender, SocketAsyncEventArgs e) {

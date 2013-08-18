@@ -23,10 +23,9 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
     using System.Net;
     using System.Linq;
 
-    public struct PeerMessage
+    public class PeerMessage
     {
-        public PeerMessage(EndPoint peer, byte[] message)
-            : this() {
+        public PeerMessage(EndPoint peer, byte[] message) {
             ConnectionPeer = peer;
             MessageData = message;
         }
