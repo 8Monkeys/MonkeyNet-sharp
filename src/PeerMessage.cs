@@ -20,10 +20,10 @@
 
 namespace EightMonkeys.MonkeyEmpire.MonkeyNet
 {
+    using System;
     using System.Net;
-    using System.Linq;
 
-    public class PeerMessage
+    public class PeerMessage: EventArgs
     {
         public PeerMessage(EndPoint peer, byte[] message) {
             ConnectionPeer = peer;
