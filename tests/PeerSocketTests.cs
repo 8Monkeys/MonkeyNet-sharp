@@ -17,6 +17,7 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
             var socket = new PeerSocket();
             Assert.IsNotNull(socket, "Parameterless constructor failed to create an object");
             Assert.True(socket.Bound, "Parameterless constructor was not able to bind to socket");
+            Assert.True(socket.Open(), "Socket can't open default port");
             Assert.AreEqual(new IPEndPoint(IPAddress.IPv6Any, 42337), socket.LocalEndPoint);
             socket.Dispose();
             Assert.False(socket.Bound, "The socket is bound longer than expected");
@@ -37,6 +38,7 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
             var socket = new PeerSocket(new IPEndPoint(IPAddress.IPv6None, 12345));
             Assert.IsNotNull(socket, "EndPoint constructor failed to create an object");
             Assert.True(socket.Bound, "Constructor was not able to bind to socket");
+            Assert.True(socket.Open(), "Socket can't open the specified port");
             socket.Dispose();
             Assert.False(socket.Bound, "The socket is bound longer than expected");
         }
