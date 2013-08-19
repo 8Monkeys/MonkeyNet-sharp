@@ -129,6 +129,7 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
             _udpSocket.Close();
             _udpSocket.Dispose();
             clearStateObjects();
+            newMessage = null;
         }
         #endregion
 
