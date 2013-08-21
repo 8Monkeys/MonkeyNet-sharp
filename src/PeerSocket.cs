@@ -82,7 +82,10 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
             LocalEndPoint = localEndpoint;
             Bound = _udpSocket.IsBound;
             try {
-                _udpSocket.Blocking = false;
+                _udpSocket.DontFragment = true; // MTU determination is done by the OS, defaults to MTU probing every 10 Minutes
+                _udpSocket.EnableBroadcast = true; // the sockets receives data sent to broadcast adresses
+                _udpSocket.LingerState = new LingerOption(true, 0); // discards any queued data on Close()
+                _udpSocket.MulticastLoopback = true; // any message sent to multicast should be delivered to the local application as well
                 _udpSocket.Bind(LocalEndPoint);
                 Bound = _udpSocket.IsBound;
             }
@@ -97,6 +100,9 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
             catch (SecurityException e) {
                 Console.WriteLine(e.Message);
                 Bound = false;
+            }
+            catch (NotSupportedException e) {
+                Console.WriteLine(e.Message);
             }
         }
 
