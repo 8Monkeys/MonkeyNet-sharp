@@ -53,7 +53,8 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
 
         #region private Properties
         private Socket _udpSocket { get; set; }
-        private Queue<SocketAsyncEventArgs> _stateobjects { get; set; }
+        private Queue<SocketAsyncEventArgs> _receivingStateobjects { get; set; }
+        private Queue<SocketAsyncEventArgs> _sendingStateobjects { get; set; }
         #endregion
 
         #region Constructors
@@ -123,6 +124,18 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
         }
 
         /// <summary>
+        /// Schedules a message for async sending
+        /// </summary>
+        /// <param name="message"></param>
+        /// <returns></returns>
+        public void Send(PeerMessage message) {
+            var stateobject = _sendingStateobjects.Dequeue();
+            stateobject.RemoteEndPoint = message.ConnectionPeer;
+            if (!_udpSocket.SendToAsync(stateobject))
+                OnMessageSent(_udpSocket, stateobject);
+        }
+
+        /// <summary>
         /// Disposes the PeerSocket object and releases the underlying socket.
         /// </summary>
         public void Dispose() {
@@ -135,15 +148,22 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
 
         #region private Methods
         private void clearStateObjects() {
-            foreach (var argsObject in _stateobjects) {
+            foreach (var argsObject in _receivingStateobjects) {
+                argsObject.Completed -= OnMessageReceived;
                 argsObject.Dispose();
             }
-            _stateobjects.Clear();
+            _receivingStateobjects.Clear();
+
+            foreach (var argsObject in _sendingStateobjects) {
+                argsObject.Completed -= OnMessageSent;
+                argsObject.Dispose();
+            }
+            _sendingStateobjects.Clear();
         }
 
         private void listen() {
             try {
-                var IOObject = _stateobjects.Dequeue();
+                var IOObject = _receivingStateobjects.Dequeue();
                 if (!_udpSocket.ReceiveMessageFromAsync(IOObject))
                     OnMessageReceived(_udpSocket, IOObject);
             }
@@ -156,7 +176,11 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
             byte[] message = new byte[e.BytesTransferred];
             Buffer.BlockCopy(e.Buffer, 0, message, 0, e.BytesTransferred);
             newMessage(this, new PeerMessage(e.RemoteEndPoint, message));
-            _stateobjects.Enqueue(e);
+            _receivingStateobjects.Enqueue(e);
+        }
+
+        private void OnMessageSent(object sender, SocketAsyncEventArgs e) {
+
         }
 
         private void findMaxMTU() {
@@ -168,13 +192,24 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
         }
 
         private void initStateObjects() {
-            _stateobjects = new Queue<SocketAsyncEventArgs>(10);
+            _receivingStateobjects = new Queue<SocketAsyncEventArgs>(10);
             for (int i=0; i <= 9; i++) {
                 var stateObject = new SocketAsyncEventArgs();
-                stateObject.SetBuffer(new byte[MTU], 0, MTU);
+                var buffersize = MTU - 32 - 40; // MTU - UDP header - IPv6 header
+                stateObject.SetBuffer(new byte[buffersize], 0, buffersize);
                 stateObject.RemoteEndPoint = LocalEndPoint;
                 stateObject.Completed += OnMessageReceived;
-                _stateobjects.Enqueue(stateObject);
+                _receivingStateobjects.Enqueue(stateObject);
+            }
+
+            _sendingStateobjects = new Queue<SocketAsyncEventArgs>(10);
+            for (int i =0; i <= 9; i++) {
+                var stateObject = new SocketAsyncEventArgs();
+                var buffersize = MTU - 32 - 40; // MTU - UDP header - IPv6 header
+                stateObject.SetBuffer(new byte[buffersize], 0, buffersize);
+                stateObject.RemoteEndPoint = LocalEndPoint;
+                stateObject.Completed += OnMessageSent;
+                _sendingStateobjects.Enqueue(stateObject);
             }
         }
         #endregion
