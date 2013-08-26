@@ -52,7 +52,7 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
         /// <summary>
         /// The number of <see cref="System.Net.Sockets.SocketAsyncEventArgs"/> that are used on the socket.
         /// </summary>
-        public uint IOObjectCount { get; private set; }
+        public int IOObjectCount { get; private set; }
         #endregion
 
         #region private Fields
@@ -97,14 +97,17 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
         /// <param name="localEndpoint">The local endpoint to bind to. This may not be null</param>
         /// <param name="ioObjectCount">An unsigned integer value telling this class how many SAEA 
         /// objects should be used for reading and writing</param>
-        /// <exception cref="ArgumentException">if localEnPoint was null</exception>
+        /// <exception cref="ArgumentException">if localEnPoint was null or the ioCount was smaller
+        /// than zero</exception>
         /// <exception cref="SecurityException">if the caller is not allowed to open a socket
         /// </exception>
-        public PeerSocket(EndPoint localEndpoint, uint ioObjectCount) {
+        public PeerSocket(EndPoint localEndpoint, int ioObjectCount) {
             try {
                 IOObjectCount = ioObjectCount;
                 _udpSocket.Blocking = false;
                 _udpSocket.Bind(localEndpoint);
+                if (ioObjectCount <= 0)
+                    throw new ArgumentException("ioObectCount may not be smaller than zero");
                 fillWithSendingSAEAobjects(ref _sendingSAEAs);
             }
             catch (SocketException e) {
@@ -171,7 +174,7 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
 
         #region private Methods
         private void fillWithReadingSAEAobjects(ref System.Collections.Generic.Queue<SocketAsyncEventArgs> SAEAQueue) {
-            SAEAQueue = new System.Collections.Generic.Queue<SocketAsyncEventArgs>((int)IOObjectCount);
+            SAEAQueue = new System.Collections.Generic.Queue<SocketAsyncEventArgs>(IOObjectCount);
             for (int i=0; i < IOObjectCount; ++i) {
                 var SAEAobject = new SocketAsyncEventArgs();
                 SAEAobject.RemoteEndPoint = _udpSocket.LocalEndPoint;
@@ -183,7 +186,7 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
         }
 
         private void fillWithSendingSAEAobjects(ref System.Collections.Generic.Queue<SocketAsyncEventArgs> SAEAQueue) {
-            SAEAQueue = new System.Collections.Generic.Queue<SocketAsyncEventArgs>((int)IOObjectCount);
+            SAEAQueue = new System.Collections.Generic.Queue<SocketAsyncEventArgs>(IOObjectCount);
             for (int i=0; i < IOObjectCount; ++i) {
                 var SAEAobject = new SocketAsyncEventArgs();
                 SAEAobject.SocketFlags = SocketFlags.None;
