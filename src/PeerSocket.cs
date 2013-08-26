@@ -56,6 +56,7 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
             try {
                 _udpSocket.Blocking = false;
                 _udpSocket.Bind(localEndpoint);
+                fillWithSendingSAEAobjects(ref _sendingSAEAs);
             }
             catch (SocketException e) {
                 System.Diagnostics.Debug.WriteLine("Failed to bind to local Endpoint. Exception was:");
@@ -70,8 +71,21 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
 
         #region public Methods
         public void Dispose() {
-            // TODO: check if running, only dispose when stopped. Get the SAEAobjects out of the loop if possible
-            throw new NotImplementedException();
+            if (_isReceiving && _udpSocket != null) {
+                _udpSocket.Dispose();
+                // when the socket is disposed, SAEAs return with their completed event. The flag prevents rescheduling a listener object.
+                _isReceiving = false;
+                foreach (var SAEAobject in _sendingSAEAs) {
+                    SAEAobject.Dispose();
+                }
+                foreach (var SAEAobject in _receivingSAEAs) {
+                    SAEAobject.Dispose();
+                }
+
+                _udpSocket = null;
+                MessageReceived = null;
+                MessageSent = null;
+            }
         }
 
         public void ReceiveMessages() {
@@ -81,7 +95,7 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
         }
 
         public void SendMessage(SocketMessage message) {
-            throw new NotImplementedException();
+            _udpSocket.SendToAsync(_sendingSAEAs.Dequeue());
         }
         #endregion
 
@@ -96,6 +110,20 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
                 SAEAobject.Completed += OnReadingMessageComplete;
                 SAEAQueue.Enqueue(SAEAobject);
             }
+        }
+
+        private void fillWithSendingSAEAobjects(ref System.Collections.Generic.Queue<SocketAsyncEventArgs> SAEAQueue) {
+            SAEAQueue = new System.Collections.Generic.Queue<SocketAsyncEventArgs>((int)IOObjectCount);
+            for (int i=0; i < IOObjectCount; ++i) {
+                var SAEAobject = new SocketAsyncEventArgs();
+                SAEAobject.SocketFlags = SocketFlags.None;
+                SAEAobject.Completed += OnSendingMessageComplete;
+                SAEAQueue.Enqueue(SAEAobject);
+            }
+        }
+
+        private void OnSendingMessageComplete(object sender, SocketAsyncEventArgs e) {
+            MessageSent(this, null);
         }
 
         void OnReadingMessageComplete(object sender, SocketAsyncEventArgs e) {
