@@ -33,7 +33,7 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
 
         #region public Properties
         public bool IsBound { get { return _udpSocket.IsBound; } }
-        public uint IOObjectCount { get; set; }
+        public uint IOObjectCount { get; private set; }
         #endregion
 
         #region private Fields
@@ -52,8 +52,9 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
         /// <param name="localEndpoint"></param>
         /// <exception cref="ArgumentException">if localEnPoint was null</exception>
         /// <exception cref="SecurityException">if the caller is not allowed to open a socket</exception>
-        public PeerSocket(EndPoint localEndpoint) {
+        public PeerSocket(EndPoint localEndpoint, uint ioObjectCount) {
             try {
+                IOObjectCount = ioObjectCount;
                 _udpSocket.Blocking = false;
                 _udpSocket.Bind(localEndpoint);
                 fillWithSendingSAEAobjects(ref _sendingSAEAs);
