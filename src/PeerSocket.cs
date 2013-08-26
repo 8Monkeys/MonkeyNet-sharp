@@ -119,6 +119,10 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
         #endregion
 
         #region public Methods
+        /// <summary>
+        /// Disposes this PeerSocket and releases all resources. The socket is closed and 
+        /// outstanding operations are immediately aborted.
+        /// </summary>
         public void Dispose() {
             if (_isWorking && _udpSocket != null) {
                 _udpSocket.Dispose();
@@ -137,12 +141,23 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
             }
         }
 
+        /// <summary>
+        /// Starts to receive incoming messages on the underlying socket. With a call to this 
+        /// method the SAEA objects for receiving messages are initialized.
+        /// </summary>
         public void ReceiveMessages() {
             _isWorking = true;
             fillWithReadingSAEAobjects(ref _receivingSAEAs);
             startListening();
         }
 
+        /// <summary>
+        /// Sends a message with data and receiver specified in the message. The MessageSent event 
+        /// is fired when the process is completed. The message that was actually sent is passed 
+        /// with the event and can be checked for equality with the message that was passed as 
+        /// argument to this method.
+        /// </summary>
+        /// <param name="message"></param>
         public void SendMessage(SocketMessage message) {
             if (_isWorking) {
                 var saea = _sendingSAEAs.Dequeue();
