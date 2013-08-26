@@ -56,21 +56,50 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
         #endregion
 
         #region private Fields
+        /// <summary>
+        /// The socket to work with. It is set to use InterNetworkV6 UDP.
+        /// </summary>
         Socket _udpSocket = new Socket(AddressFamily.InterNetworkV6,
                                        SocketType.Dgram,
                                        ProtocolType.Udp);
+        /// <summary>
+        /// A queue of <see cref="System.Net.Sockets.SocketAsyncEventArgs"/> that are used for 
+        /// incoming datagrams. Their Completed event is set to use this classes OnReadingMessageComplete
+        /// method.
+        /// </summary>
         System.Collections.Generic.Queue<SocketAsyncEventArgs> _receivingSAEAs;
+        /// <summary>
+        /// A queue of <see cref="System.Net.Sockets.SocketAsyncEventArgs"/> that are used for 
+        /// outgoing datagrams. Their Completed event is set to use this classes OnSendingMessageComplete
+        /// method.
+        /// </summary>
         System.Collections.Generic.Queue<SocketAsyncEventArgs> _sendingSAEAs;
-        bool _isReceiving = false;
+        /// <summary>
+        /// A flag that is preventing the socket from scheduling more SAEA object for receving when
+        /// this classes Dispose method is called. OnReadingMessageComplete is said to schedule an
+        /// object for reading immediately, which is bad when the objects in the queue are disposed.
+        /// This flag is checked before and makes sure that rescheduling is not possible.
+        /// </summary>
+        bool _isWorking = false;
         #endregion
 
         #region Constructors
         /// <summary>
+        /// Creates a new PeerSocket object. This will initialize a socket that is bound to the 
+        /// local endpoint specified in the first argument. You should check the IsBound property 
+        /// right after calling the constructor to find out if there were exceptions. 
         /// 
+        /// By calling the constructor, the number of 
+        /// <see cref="System.Net.Sockets.SocketAsyncEventArgs"/> for both, the reading and the 
+        /// sending queue is determined. The sending queue is immediately initialized, the reading
+        /// queue will be after calling ReceiveMessages.
         /// </summary>
-        /// <param name="localEndpoint"></param>
+        /// <param name="localEndpoint">The local endpoint to bind to. This may not be null</param>
+        /// <param name="ioObjectCount">An unsigned integer value telling this class how many SAEA 
+        /// objects should be used for reading and writing</param>
         /// <exception cref="ArgumentException">if localEnPoint was null</exception>
-        /// <exception cref="SecurityException">if the caller is not allowed to open a socket</exception>
+        /// <exception cref="SecurityException">if the caller is not allowed to open a socket
+        /// </exception>
         public PeerSocket(EndPoint localEndpoint, uint ioObjectCount) {
             try {
                 IOObjectCount = ioObjectCount;
@@ -91,10 +120,10 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
 
         #region public Methods
         public void Dispose() {
-            if (_isReceiving && _udpSocket != null) {
+            if (_isWorking && _udpSocket != null) {
                 _udpSocket.Dispose();
                 // when the socket is disposed, SAEAs return with their completed event. The flag prevents rescheduling a listener object.
-                _isReceiving = false;
+                _isWorking = false;
                 foreach (var SAEAobject in _sendingSAEAs) {
                     SAEAobject.Dispose();
                 }
@@ -109,17 +138,19 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
         }
 
         public void ReceiveMessages() {
-            _isReceiving = true;
+            _isWorking = true;
             fillWithReadingSAEAobjects(ref _receivingSAEAs);
             startListening();
         }
 
         public void SendMessage(SocketMessage message) {
-            var saea = _sendingSAEAs.Dequeue();
-            saea.RemoteEndPoint = message.MessagePeer;
-            saea.SetBuffer(message.MessagePayload, 0, message.MessagePayload.Length);
-            if (!_udpSocket.SendToAsync(saea))
-                OnSendingMessageComplete(this, saea);
+            if (_isWorking) {
+                var saea = _sendingSAEAs.Dequeue();
+                saea.RemoteEndPoint = message.MessagePeer;
+                saea.SetBuffer(message.MessagePayload, 0, message.MessagePayload.Length);
+                if (!_udpSocket.SendToAsync(saea))
+                    OnSendingMessageComplete(this, saea);
+            }
         }
         #endregion
 
@@ -162,7 +193,7 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
         }
 
         private void startListening() {
-            if (_isReceiving)
+            if (_isWorking)
                 _udpSocket.ReceiveFromAsync(_receivingSAEAs.Dequeue());
         }
         #endregion
