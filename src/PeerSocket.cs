@@ -65,7 +65,7 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
             }
             catch (ObjectDisposedException e) {
                 System.Diagnostics.Debug.WriteLine("The socket seems to have been deleted somewhere"
-                    + "outside");
+                    + "outside: " + e.Message);
             }
         }
         #endregion
@@ -96,7 +96,10 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
         }
 
         public void SendMessage(SocketMessage message) {
-            _udpSocket.SendToAsync(_sendingSAEAs.Dequeue());
+            var saea = _sendingSAEAs.Dequeue();
+            saea.RemoteEndPoint = message.MessagePeer;
+            saea.SetBuffer(message.MessagePayload, 0, message.MessagePayload.Length);
+            _udpSocket.SendToAsync(saea);
         }
         #endregion
 
@@ -124,12 +127,17 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
         }
 
         private void OnSendingMessageComplete(object sender, SocketAsyncEventArgs e) {
-            MessageSent(this, null);
+            byte[] message = new byte[e.BytesTransferred];
+            Buffer.BlockCopy(e.Buffer, 0, message, 0, e.BytesTransferred);
+            MessageSent(this, new SocketMessage(e.RemoteEndPoint, message));
+            _sendingSAEAs.Enqueue(e);
         }
 
         void OnReadingMessageComplete(object sender, SocketAsyncEventArgs e) {
             startListening();
-            MessageReceived(this, new SocketMessage(e.RemoteEndPoint, e.Buffer));
+            byte[] message = new byte[e.BytesTransferred];
+            Buffer.BlockCopy(e.Buffer, 0, message, 0, e.BytesTransferred);
+            MessageReceived(this, new SocketMessage(e.RemoteEndPoint, message));
             _receivingSAEAs.Enqueue(e);
         }
 
