@@ -1,4 +1,4 @@
-#region License
+﻿#region License
 /*
     MonkeyNet is a real-time networking library for CLRs
     Copyright (C) 2013  8monkeys.de
@@ -23,13 +23,13 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
     using System;
     using System.Net;
 
-    public class PeerMessage: EventArgs
+    public class SocketMessage: EventArgs // TODO: reduce to internal after the upper layers allow it
     {
-        public PeerMessage(EndPoint peer, byte[] message) {
-            ConnectionPeer = peer;
-            MessageData = message;
+        public SocketMessage(EndPoint peer, byte[] payload) {
+            MessagePeer = peer;
+            MessagePayload = payload;
         }
-        public EndPoint ConnectionPeer { get; private set; }
-        public byte[] MessageData { get; private set; }
+        public EndPoint MessagePeer { get; private set; }
+        public byte[] MessagePayload { get; private set; }
     }
 }
