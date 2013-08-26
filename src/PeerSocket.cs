@@ -118,7 +118,8 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
             var saea = _sendingSAEAs.Dequeue();
             saea.RemoteEndPoint = message.MessagePeer;
             saea.SetBuffer(message.MessagePayload, 0, message.MessagePayload.Length);
-            _udpSocket.SendToAsync(saea);
+            if (!_udpSocket.SendToAsync(saea))
+                OnSendingMessageComplete(this, saea);
         }
         #endregion
 
