@@ -27,12 +27,31 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
     public class PeerSocket: IDisposable, IMessageReceiver, IMessageSender // TODO: reduce to internal after the upper layers allow it
     {
         #region Events
+        /// <summary>
+        /// This event is fired every time the socket receives a datagram. A new 
+        /// <see cref="EightMonkeys.MonkeyEmpire.MonkeyNet.SocketMessage"/> is created that contains
+        /// information about the sender of the datagram and the raw payload delivered with it. 
+        /// The sender object of the event is always an instance of this class, not the socket that
+        /// received the data.
+        /// </summary>
         public event EventHandler<SocketMessage> MessageReceived;
+        /// <summary>
+        /// This event is fired every time the socket has sent a datagram. The 
+        /// <see cref="EightMonkeys.MonkeyEmpire.MonkeyNet.SocketMessage"/> can be checked if the 
+        /// message sent is the same as the argument passed to the SendMessage method of this class.
+        /// </summary>
         public event EventHandler<SocketMessage> MessageSent;
         #endregion
 
         #region public Properties
+        /// <summary>
+        /// A flag that returns a boolean value indicating if the underlying socket is bound to a 
+        /// port. You should consider the PeerSocket object inoperable if this returns false.
+        /// </summary>
         public bool IsBound { get { return _udpSocket.IsBound; } }
+        /// <summary>
+        /// The number of <see cref="System.Net.Sockets.SocketAsyncEventArgs"/> that are used on the socket.
+        /// </summary>
         public uint IOObjectCount { get; private set; }
         #endregion
 
