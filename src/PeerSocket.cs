@@ -24,6 +24,16 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
     using System.Net;
     using System.Net.Sockets;
 
+    /// <summary>
+    /// A network interface provider for UDP based communication.
+    /// </summary>
+    /// <remarks>
+    /// This class makes use of the enhancements delivered with the Sockets namespace of the .NET
+    /// 3.5. It uses <see cref="System.Net.Sockets.SocketAsyncEventArgs"/> to read and write to and
+    /// from the socket ansynchronously. A new message is handed over to the user with an event and
+    /// the user may schedule a message for sending at any time. Sending and receiving works on the
+    /// same port on the local machine.
+    /// </remarks>
     public class PeerSocket: IDisposable, IMessageReceiver, IMessageSender // TODO: reduce to internal after the upper layers allow it
     {
         #region Events
@@ -173,6 +183,13 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
         #endregion
 
         #region private Methods
+        /// <summary>
+        /// This method assumes that the parameter handed over is to be filled with SAEA objects for
+        /// reading ansychronously from the socket. Each created SAEA object is assigned a buffer of
+        /// 512Bytes in size and gets the localEndPoint of the underlying socket as its 
+        /// RemoteEndPoint. The OnReadingComplete method is attached to the Completed event.
+        /// </summary>
+        /// <param name="SAEAQueue">the queue to be filled</param>
         private void fillWithReadingSAEAobjects(ref System.Collections.Generic.Queue<SocketAsyncEventArgs> SAEAQueue) {
             SAEAQueue = new System.Collections.Generic.Queue<SocketAsyncEventArgs>(IOObjectCount);
             for (int i=0; i < IOObjectCount; ++i) {
@@ -185,6 +202,13 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
             }
         }
 
+        /// <summary>
+        /// This method assumes that the parameter handed over is to be filled with SAEA objects for
+        /// sending ansychronously to a remote peer. Each created SAEA object is gets the 
+        /// SocketOptions.None flage and the completed event is attached the OnSendingComplete
+        /// method of this class. The buffer and remote endpoint will be assigned on sending data.
+        /// </summary>
+        /// <param name="SAEAQueue">the queue of objects to be filled.</param>
         private void fillWithSendingSAEAobjects(ref System.Collections.Generic.Queue<SocketAsyncEventArgs> SAEAQueue) {
             SAEAQueue = new System.Collections.Generic.Queue<SocketAsyncEventArgs>(IOObjectCount);
             for (int i=0; i < IOObjectCount; ++i) {
@@ -195,6 +219,15 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
             }
         }
 
+        /// <summary>
+        /// When a Completed event of a sending SAEA object is fired, this method gets called with
+        /// the SAEA object that fired the event. Afterwards a new buffer is created with the size
+        /// of the BytesTransferred property of the SAEA object. The new buffer and the 
+        /// RemoteEndPoint are assigned to a new SocketMessage and fired via the MessageSent event
+        /// of this class. The SAEA object is recycled afterwards by feeding it back to the SAEA queue.
+        /// </summary>
+        /// <param name="sender">The SAEA object that fired the Completed event</param>
+        /// <param name="e">The same SAEA object that can be queried for information</param>
         private void OnSendingMessageComplete(object sender, SocketAsyncEventArgs e) {
             byte[] message = new byte[e.BytesTransferred];
             Buffer.BlockCopy(e.Buffer, 0, message, 0, e.BytesTransferred);
@@ -202,6 +235,17 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
             _sendingSAEAs.Enqueue(e);
         }
 
+        /// <summary>
+        /// When an SAEA object finished reading on a socket, this method gets called. If this class
+        /// is receiving further messages (read: it's Disposed method was not called yet), a new 
+        /// SAEA object is scheduled for reading immediately. Afterwards a new byte buffer object is
+        /// created with the size of the actual received content. This byte buffer object, along 
+        /// with information about the peer that sent the message is passed to the constructor of
+        /// a SocketMessage that is fired as MessageReceived event. The SAEA object is recycled for
+        /// further usage.
+        /// </summary>
+        /// <param name="sender">The SAEA object that fired the Completed event</param>
+        /// <param name="e">The same SAEA object that can be queried for information</param>
         void OnReadingMessageComplete(object sender, SocketAsyncEventArgs e) {
             startListening();
             byte[] message = new byte[e.BytesTransferred];
@@ -210,6 +254,9 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
             _receivingSAEAs.Enqueue(e);
         }
 
+        /// <summary>
+        /// Schedules a SAEA object for reading on a socket.
+        /// </summary>
         private void startListening() {
             if (_isWorking)
                 _udpSocket.ReceiveFromAsync(_receivingSAEAs.Dequeue());
