@@ -107,7 +107,7 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
                 _udpSocket.Blocking = false;
                 _udpSocket.Bind(localEndpoint);
                 if (ioObjectCount <= 0)
-                    throw new ArgumentException("ioObectCount may not be smaller than zero");
+                    throw new ArgumentException("ioObjectCount may not be smaller than zero, but is "+ ioObjectCount);
                 fillWithSendingSAEAobjects(ref _sendingSAEAs);
             }
             catch (SocketException e) {
