@@ -27,7 +27,7 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
     public class MessageRouter
     {
         private PeerSocket _socket;
-        private List<int> _registeredProtocolIDs;
+        private List<uint> _registeredProtocolIDs; // TODO: Maybe a hashmap of ints and delegates is best to use here?
 
         public MessageRouter() {
             _socket = new PeerSocket(new IPEndPoint(IPAddress.IPv6Any, 42337), 10);
@@ -35,11 +35,12 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
                 throw new Exception("The underlying peer socket can't be initialized");
             _socket.MessageReceived += OnSocketMessageReceived;
             _socket.MessageSent += OnSocketMessageSent;
+            _socket.ReceiveMessages();
 
-            _registeredProtocolIDs = new List<int>();
+            _registeredProtocolIDs = new List<uint>();
         }
 
-        public void RegisterNewProtocolID(int protocolID) {
+        public void RegisterNewProtocolID(uint protocolID) {
             _registeredProtocolIDs.Add(protocolID);
         }
 
@@ -48,7 +49,11 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
         }
 
         void OnSocketMessageReceived(object sender, SocketMessage e) {
-            throw new NotImplementedException();
+            uint protocolID = BitConverter.ToUInt32(e.MessagePayload, 0);
+            if (_registeredProtocolIDs.Contains(protocolID) && (sender as PeerSocket) == _socket) {
+                // TODO: Fire a message to the application registered with this protocol
+                Console.WriteLine("Bang!");
+            }
         }
     }
 }
