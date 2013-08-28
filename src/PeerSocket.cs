@@ -34,7 +34,7 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
     /// the user may schedule a message for sending at any time. Sending and receiving works on the
     /// same port on the local machine.
     /// </remarks>
-    public class PeerSocket: IDisposable, IMessageReceiver, IMessageSender // TODO: reduce to internal after the upper layers allow it
+    class PeerSocket: IDisposable, IMessageReceiver, IMessageSender // TODO: reduce to internal after the upper layers allow it
     {
         #region Events
         /// <summary>

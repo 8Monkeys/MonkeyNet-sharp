@@ -28,7 +28,7 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
     /// message itself. A SocketMessage is used to inform users about received data and is also 
     /// specifying where the data wrapped is to be sent to.
     /// </summary>
-    public class SocketMessage: EventArgs // TODO: reduce to internal after the upper layers allow it
+    class SocketMessage: EventArgs // TODO: reduce to internal after the upper layers allow it
     {
         /// <summary>
         /// Since the SocketMessage is read-only once it is created, the constructor is passed the
