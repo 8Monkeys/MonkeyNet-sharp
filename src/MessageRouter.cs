@@ -29,8 +29,11 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
         private PeerSocket _socket;
         private List<uint> _registeredProtocolIDs; // TODO: Maybe a hashmap of ints and delegates is best to use here?
 
-        public MessageRouter() {
-            _socket = new PeerSocket(new IPEndPoint(IPAddress.IPv6Any, 42337), 10);
+        public MessageRouter()
+            : this(new IPEndPoint(IPAddress.IPv6Any, 42337)) { }
+
+        public MessageRouter(IPEndPoint localEndPoint) {
+            _socket = new PeerSocket(localEndPoint, 10);
             if (!_socket.IsBound)
                 throw new Exception("The underlying peer socket can't be initialized");
             _socket.MessageReceived += OnSocketMessageReceived;

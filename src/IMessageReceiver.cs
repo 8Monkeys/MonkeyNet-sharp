@@ -20,6 +20,7 @@
 
 namespace EightMonkeys.MonkeyEmpire.MonkeyNet
 {
+    // TODO: Rename to something like IMessageInput and write classes that accept scripted input as well. Then, make the Message Router class have a list of inputs that can be initialized with more than one IMessageInput instance. Then we can listen to either input type or both at once.
     using System;
 
     interface IMessageReceiver
