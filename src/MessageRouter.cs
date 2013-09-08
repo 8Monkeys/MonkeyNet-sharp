@@ -27,7 +27,7 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
     public class MessageRouter
     {
         private PeerSocket _socket;
-        private List<uint> _registeredProtocolIDs; // TODO: Maybe a hashmap of ints and delegates is best to use here?
+        private List<IApplication> _connectedApplications;
 
         public MessageRouter()
             : this(new IPEndPoint(IPAddress.IPv6Any, 42337)) { }
@@ -40,11 +40,13 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
             _socket.MessageSent += OnSocketMessageSent;
             _socket.ReceiveMessages();
 
-            _registeredProtocolIDs = new List<uint>();
+            _connectedApplications = new List<IApplication>();
         }
 
-        public void RegisterNewProtocolID(uint protocolID) {
-            _registeredProtocolIDs.Add(protocolID);
+        public void RegisterApplication(IApplication app) {
+            if (app.ProtocolID > 0) {
+                _connectedApplications.Add(app);
+            }
         }
 
         void OnSocketMessageSent(object sender, SocketMessage e) {
@@ -52,10 +54,15 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
         }
 
         void OnSocketMessageReceived(object sender, SocketMessage e) {
-            uint protocolID = BitConverter.ToUInt32(e.MessagePayload, 0);
-            if (_registeredProtocolIDs.Contains(protocolID) && (sender as PeerSocket) == _socket) {
-                // TODO: Fire a message to the application registered with this protocol
-                Console.WriteLine("Bang!");
+            // System.BitConverter is not CLS-compliant, neither is uint (= System.UInt32)
+            int protocolID = e.MessagePayload[0];
+            protocolID = (protocolID << 4) + e.MessagePayload[1];
+            protocolID = (protocolID << 8) + e.MessagePayload[2];
+            protocolID = (protocolID << 12) + e.MessagePayload[3];
+            var receivers = _connectedApplications.FindAll(x => x.ProtocolID == protocolID);
+            while (receivers.Count > 0) {
+                receivers[receivers.Count].OnMessageReceived(e.MessagePeer, e.MessagePayload);
+                receivers.RemoveAt(receivers.Count);
             }
         }
     }
