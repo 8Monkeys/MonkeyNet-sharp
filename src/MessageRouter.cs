@@ -56,9 +56,9 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
         void OnSocketMessageReceived(object sender, SocketMessage e) {
             // System.BitConverter is not CLS-compliant, neither is uint (= System.UInt32)
             int protocolID = e.MessagePayload[0];
-            protocolID = (protocolID << 4) + e.MessagePayload[1];
-            protocolID = (protocolID << 8) + e.MessagePayload[2];
-            protocolID = (protocolID << 12) + e.MessagePayload[3];
+            protocolID = (protocolID << 8) + e.MessagePayload[1];
+            protocolID = (protocolID << 16) + e.MessagePayload[2];
+            protocolID = (protocolID << 24) + e.MessagePayload[3];
             var receivers = _connectedApplications.FindAll(x => x.ProtocolID == protocolID);
             while (receivers.Count > 0) {
                 receivers[receivers.Count].OnMessageReceived(e.MessagePeer, e.MessagePayload);
