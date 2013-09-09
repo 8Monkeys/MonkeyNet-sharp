@@ -44,9 +44,7 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
         }
 
         public void RegisterApplication(IApplication app) {
-            if (app.ProtocolID > 0) {
-                _connectedApplications.Add(app);
-            }
+            _connectedApplications.Add(app);
         }
 
         void OnSocketMessageSent(object sender, SocketMessage e) {
