@@ -111,13 +111,11 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
         /// than zero</exception>
         /// <exception cref="SecurityException">if the caller is not allowed to open a socket
         /// </exception>
-        public PeerSocket(EndPoint localEndpoint, int ioObjectCount) {
+        public PeerSocket(EndPoint localEndpoint) {
             try {
-                IOObjectCount = ioObjectCount;
+                IOObjectCount = 25; // this value should get read from a configuration file
                 _udpSocket.Blocking = false;
                 _udpSocket.Bind(localEndpoint);
-                if (ioObjectCount <= 0)
-                    throw new ArgumentException("ioObjectCount may not be smaller than zero, but is " + ioObjectCount);
                 fillWithSendingSAEAobjects(ref _sendingSAEAs);
             }
             catch (SocketException e) {

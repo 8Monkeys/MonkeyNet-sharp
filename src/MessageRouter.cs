@@ -33,7 +33,7 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
             : this(new IPEndPoint(IPAddress.IPv6Any, 42337)) { }
 
         public MessageRouter(IPEndPoint localEndPoint) {
-            _socket = new PeerSocket(localEndPoint, 10);
+            _socket = new PeerSocket(localEndPoint);
             if (!_socket.IsBound)
                 throw new Exception("The underlying peer socket can't be initialized");
             _socket.MessageReceived += OnSocketMessageReceived;
