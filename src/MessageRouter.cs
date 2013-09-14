@@ -24,14 +24,40 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
     using System.Net;
     using System.Collections.Generic;
 
+    /// <summary>
+    /// This class is used to find out of packets sent to the local machine are intended for a 
+    /// listening application. It checks the first four byte of an incoming message to retrieve a
+    /// protocol code that is intended to identify an application. If one or more such applications
+    /// are listening for incoming messages using this MessageRouter, their OnMessageReceived 
+    /// method is called with the full message (including the message ID, at least for the moment).
+    /// 
+    /// In order to now about incoming messages, they have to register themselves by calling 
+    /// RegisterApplication with an object implementing the IApplication interface.
+    /// </summary>
     public class MessageRouter
     {
+        /// <summary>
+        /// the underlying socket to be used for communication
+        /// </summary>
         private PeerSocket _socket;
+        /// <summary>
+        /// a list of registered applications
+        /// </summary>
         private List<IApplication> _connectedApplications;
 
+        /// <summary>
+        /// An empty constructor. This will set up the internal socket to listen to IPv6Any on port
+        /// 42337.
+        /// </summary>
         public MessageRouter()
             : this(new IPEndPoint(IPAddress.IPv6Any, 42337)) { }
 
+        /// <summary>
+        /// Constructor to specify the local endpoint that the underlying socket is listening to.
+        /// </summary>
+        /// <param name="localEndPoint">The local endpoint to listen to</param>
+        /// <exception cref="System.Exception">is thrown when the underlying socket could not bind 
+        /// to the specified EndPoint</exception>
         public MessageRouter(IPEndPoint localEndPoint) {
             _socket = new PeerSocket(localEndPoint);
             if (!_socket.IsBound)
@@ -43,6 +69,11 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
             _connectedApplications = new List<IApplication>();
         }
 
+        /// <summary>
+        /// Subscribes an application to the MessageRouter in order to get notified when messages 
+        /// are coming in for the specified protocolID
+        /// </summary>
+        /// <param name="app">the object that is to be notified at incoming messages</param>
         public void RegisterApplication(IApplication app) {
             _connectedApplications.Add(app);
         }
@@ -51,6 +82,14 @@ namespace EightMonkeys.MonkeyEmpire.MonkeyNet
             throw new NotImplementedException();
         }
 
+        /// <summary>
+        /// The callback that is informed about incoming messages. It parses the first 4 byte of 
+        /// the messages, retrieving an integer value from it that represents the protocolID of the
+        /// application that this message is for. If one or more apllications are registered for 
+        /// this protocol ID the are notified.
+        /// </summary>
+        /// <param name="sender">The <see cref="PeerSocket"/>that received the message</param>
+        /// <param name="e"></param>
         void OnSocketMessageReceived(object sender, SocketMessage e) {
             // System.BitConverter is not CLS-compliant, neither is uint (= System.UInt32)
             int protocolID = e.MessagePayload[3];
